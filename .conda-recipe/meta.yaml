@@ -1,0 +1,35 @@
+# source will be downloaded prior to filling in jinja templates
+# Example assumes that this folder has setup.py in it
+source:
+  git_url: ../
+
+package:
+  name: paho-mqtt-helpers
+{% if GIT_DESCRIBE_NUMBER > '0' %}
+  version: {{ GIT_DESCRIBE_TAG[1:] }}+{{ GIT_DESCRIBE_NUMBER }}
+{% else %}
+  version: {{ GIT_DESCRIBE_TAG[1:] }}
+{% endif %}
+
+build:
+  # If this is a new build for the same version, increment the build
+  # number. If you do not include this key, it defaults to 0.
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python 2.7*
+    - paho-mqtt
+
+  run:
+    - python 2.7*
+    - paho-mqtt
+
+test:
+  imports:
+    - paho_mqtt_helpers
+
+about:
+  home: https://github.com/wheeler-microfluidics/paho-mqtt-helpers.git
+  license: BSD
