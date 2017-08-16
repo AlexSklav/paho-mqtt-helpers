@@ -59,7 +59,8 @@ class BaseMqttReactor(object):
             self.mqtt_client.connect(host=self.host, port=self.port,
                                      keepalive=self.keepalive)
         except socket.error:
-            logger.error('Error connecting to MQTT broker.')
+            pass
+            # logger.error('Error connecting to MQTT broker.')
 
     ###########################################################################
     # MQTT client handlers
@@ -112,10 +113,13 @@ class BaseMqttReactor(object):
         '''
         Attempt to reconnect when disconnected.
         '''
+        # XXX: loop_start() shuould automatically call reconnect
         # Try to reconnect
-        self.mqtt_client.loop_stop()
-        self._connect()
-        self.mqtt_client.loop_start()
+        # self.mqtt_client.loop_stop()
+        # self._connect()
+        # self.mqtt_client.loop_start()
+        pass
+
 
     def on_message(self, client, userdata, msg):
         '''
