@@ -21,10 +21,10 @@ requirements:
   build:
     - python 2.7*
     - paho-mqtt
-
   run:
     - python 2.7*
     - paho-mqtt
+    - wheezy.routing
 
 test:
   imports:
