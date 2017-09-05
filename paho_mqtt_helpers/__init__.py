@@ -1,10 +1,15 @@
+import inspect
+import json
 import logging
+import urllib
+import os
+import re
 import socket
 
 import paho.mqtt.client as mqtt
+from wheezy.routing import PathRouter
 
 logger = logging.getLogger(__name__)
-
 
 class BaseMqttReactor(object):
     """
@@ -18,6 +23,9 @@ class BaseMqttReactor(object):
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_message = self.on_message
+        self.should_exit = False
+        self.router = PathRouter()
+        self.subscriptions = []
 
     ###########################################################################
     # Attributes
@@ -48,6 +56,31 @@ class BaseMqttReactor(object):
     def keepalive(self, value):
         self._keepalive = value
         self._connect()
+
+    @property
+    def plugin_path(self):
+        """Get parent directory of class location"""
+        return os.path.dirname(os.path.realpath(inspect.getfile(self.__class__)))
+
+    @property
+    def plugin_name(self):
+        """Get plugin name via the basname of the plugin path """
+        return os.path.basename(self.plugin_path)
+
+    @property
+    def url_safe_plugin_name(self):
+        """Make plugin name safe for mqtt and http requests"""
+        return urllib.quote_plus(self.plugin_name)
+
+    def addGetRoute(self, route, handler):
+        """Adds route along with corresponding subscription"""
+        self.router.add_route(route, handler)
+        # Replace characters between curly brackets with "+" wildcard
+        self.subscriptions.append(re.sub(r"\{(.+?)\}", "+", route))
+
+    def subscribe(self):
+        for subscription in self.subscriptions:
+            self.mqtt_client.subscribe(subscription)
 
     ###########################################################################
     # Private methods
@@ -113,7 +146,7 @@ class BaseMqttReactor(object):
         '''
         Attempt to reconnect when disconnected.
         '''
-        # XXX: loop_start() shuould automatically call reconnect
+        # XXX: loop_start() should automatically call reconnect
         # Try to reconnect
         # self.mqtt_client.loop_stop()
         # self._connect()
@@ -127,6 +160,12 @@ class BaseMqttReactor(object):
         '''
         logger.info('[on_message] %s: "%s"', msg.topic, msg.payload)
 
+    def on_plugin_launch(self):
+        channel = "microdrop/"+self.url_safe_plugin_name
+        self.mqtt_client.subscribe(channel+"/exit")
+        # Notify the broker that the plugin has started:
+        self.mqtt_client.publish(channel+"/plugin-started",json.dumps(self.plugin_path), retain=True)
+
     ###########################################################################
     # Control API
     # ===========
@@ -138,6 +177,12 @@ class BaseMqttReactor(object):
         self._connect()
         # Start loop in background thread.
         self.mqtt_client.loop_start()
+
+    def exit(self,a=None,b=None):
+        topic = "microdrop/"+self.url_safe_plugin_name+"/plugin-exited"
+        self.mqtt_client.publish(topic,json.dumps(self.plugin_path), retain=True)
+        self.should_exit = True
+        self.mqtt_client.disconnect()
 
     def stop(self):
         '''
