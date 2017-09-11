@@ -11,6 +11,7 @@ from wheezy.routing import PathRouter
 
 logger = logging.getLogger(__name__)
 
+
 class BaseMqttReactor(object):
     """
     Base class for MQTT-based plugins.
@@ -60,7 +61,8 @@ class BaseMqttReactor(object):
     @property
     def plugin_path(self):
         """Get parent directory of class location"""
-        return os.path.dirname(os.path.realpath(inspect.getfile(self.__class__)))
+        return os.path.dirname(os.path.realpath(
+            inspect.getfile(self.__class__)))
 
     @property
     def plugin_name(self):
@@ -76,6 +78,12 @@ class BaseMqttReactor(object):
         """Adds route along with corresponding subscription"""
         self.router.add_route(route, handler)
         # Replace characters between curly brackets with "+" wildcard
+        self.subscriptions.append(re.sub(r"\{(.+?)\}", "+", route))
+
+    def onPutMsg(self, val, method):
+        """Request plugin to change the state of one of its variables"""
+        route = "microdrop/put/"+self.name+"/"+val
+        self.router.add_route(route, method)
         self.subscriptions.append(re.sub(r"\{(.+?)\}", "+", route))
 
     def subscribe(self):
@@ -153,7 +161,6 @@ class BaseMqttReactor(object):
         # self.mqtt_client.loop_start()
         pass
 
-
     def on_message(self, client, userdata, msg):
         '''
         Callback for when a ``PUBLISH`` message is received from the broker.
@@ -164,7 +171,8 @@ class BaseMqttReactor(object):
         channel = "microdrop/"+self.url_safe_plugin_name
         self.mqtt_client.subscribe(channel+"/exit")
         # Notify the broker that the plugin has started:
-        self.mqtt_client.publish(channel+"/plugin-started",json.dumps(self.plugin_path), retain=True)
+        self.mqtt_client.publish(channel+"/plugin-started",
+                                 json.dumps(self.plugin_path), retain=True)
 
     ###########################################################################
     # Control API
@@ -178,9 +186,10 @@ class BaseMqttReactor(object):
         # Start loop in background thread.
         self.mqtt_client.loop_start()
 
-    def exit(self,a=None,b=None):
+    def exit(self, a=None, b=None):
         topic = "microdrop/"+self.url_safe_plugin_name+"/plugin-exited"
-        self.mqtt_client.publish(topic,json.dumps(self.plugin_path), retain=True)
+        self.mqtt_client.publish(topic, json.dumps(self.plugin_path),
+                                 retain=True)
         self.should_exit = True
         self.mqtt_client.disconnect()
 
