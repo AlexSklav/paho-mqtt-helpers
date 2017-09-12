@@ -171,8 +171,11 @@ class BaseMqttReactor(object):
         channel = "microdrop/"+self.url_safe_plugin_name
         self.mqtt_client.subscribe(channel+"/exit")
         # Notify the broker that the plugin has started:
-        self.mqtt_client.publish(channel+"/plugin-started",
-                                 json.dumps(self.plugin_path), retain=True)
+        self.mqtt_client.publish(channel+"/signal/"+"plugin-started",
+                                 json.dumps(self.plugin_path))
+
+        # self.mqtt_client.publish(channel+"/plugin-started",
+        #                          json.dumps(self.plugin_path), retain=True)
 
     ###########################################################################
     # Control API
@@ -187,9 +190,9 @@ class BaseMqttReactor(object):
         self.mqtt_client.loop_start()
 
     def exit(self, a=None, b=None):
-        topic = "microdrop/"+self.url_safe_plugin_name+"/plugin-exited"
-        self.mqtt_client.publish(topic, json.dumps(self.plugin_path),
-                                 retain=True)
+        print "EXIT WAS CALLED..."
+        topic = "microdrop/"+self.url_safe_plugin_name+"/signal/plugin-exited"
+        self.mqtt_client.publish(topic, json.dumps(self.plugin_path))
         self.should_exit = True
         self.mqtt_client.disconnect()
 
