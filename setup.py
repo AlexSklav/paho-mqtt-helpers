@@ -5,7 +5,6 @@ from setuptools import setup
 sys.path.insert(0, '.')
 import version
 
-
 setup(name='paho-mqtt-helpers',
       version=version.getVersion(),
       description=open('README.md', 'rb').read(),
