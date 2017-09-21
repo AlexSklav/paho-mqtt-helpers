@@ -1,3 +1,4 @@
+import datetime
 import inspect
 import json
 import logging
@@ -26,7 +27,7 @@ class BaseMqttReactor(MqttMessages):
         self._host = host
         self._port = port
         self._keepalive = keepalive
-        self.mqtt_client = mqtt.Client()
+        self.mqtt_client = mqtt.Client(client_id=self.client_id)
         self.mqtt_client.on_connect = self.on_connect
         self.mqtt_client.on_disconnect = self.on_disconnect
         self.mqtt_client.on_message = self.on_message
@@ -81,6 +82,13 @@ class BaseMqttReactor(MqttMessages):
         """Make plugin name safe for mqtt and http requests"""
         return urllib.quote_plus(self.plugin_name)
 
+    @property
+    def client_id(self):
+        """ ID used for mqtt client """
+        return (self.url_safe_plugin_name + ">>"
+                + self.plugin_path + ">>"
+                + datetime.datetime.now().isoformat().replace(">>", ""))
+
     def addGetRoute(self, route, handler):
         """Adds route along with corresponding subscription"""
         self.router.add_route(route, handler)
@@ -112,12 +120,10 @@ class BaseMqttReactor(MqttMessages):
     # MQTT client handlers
     # ====================
     def on_connect(self, client, userdata, flags, rc):
-        self.bindSignalMsg("plugin-started", "plugin-started")
-        self.bindSignalMsg("plugin-exited",  "plugin-exited")
         self.addGetRoute("microdrop/"+self.url_safe_plugin_name+"/exit",
                          self.exit)
         self.listen()
-        self.trigger("plugin-started", self.plugin_path)
+        self.subscribe()
 
     def on_disconnect(self, *args, **kwargs):
         # Startup Mqtt Loop after disconnected (unless should terminate)
@@ -135,19 +141,12 @@ class BaseMqttReactor(MqttMessages):
         try:
             payload = json.loads(msg.payload, object_hook=pandas_object_hook)
         except ValueError:
-            print "Message contains invalid json"
-            print "topic: " + msg.topic
+            print("Message contains invalid json")
+            print("topic: " + msg.topic)
             payload = None
 
         if method:
             method(payload, args)
-
-    def on_plugin_launch(self):
-        channel = "microdrop/"+self.url_safe_plugin_name
-        self.mqtt_client.subscribe(channel+"/exit")
-        # Notify the broker that the plugin has started:
-        self.mqtt_client.publish(channel+"/signal/"+"plugin-started",
-                                 json.dumps(self.plugin_path))
 
     ###########################################################################
     # Control API
@@ -160,7 +159,6 @@ class BaseMqttReactor(MqttMessages):
         self.mqtt_client.loop_forever()
 
     def exit(self, a=None, b=None):
-        self.trigger("plugin-exited", self.plugin_path)
         self.should_exit = True
         self.mqtt_client.disconnect()
 
