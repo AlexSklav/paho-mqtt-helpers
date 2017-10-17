@@ -21,15 +21,17 @@ requirements:
   build:
     - python 2.7*
     - paho-mqtt
-
   run:
     - python 2.7*
     - paho-mqtt
+    - wheezy.routing
+    - pandas-helpers
+    - mqtt-messages-python
 
 test:
   imports:
     - paho_mqtt_helpers
 
 about:
-  home: https://github.com/wheeler-microfluidics/paho-mqtt-helpers.git
+  home: https://github.com/Lucaszw/paho-mqtt-helpers.git
   license: BSD
