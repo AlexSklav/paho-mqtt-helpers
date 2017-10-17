@@ -11,6 +11,6 @@ setup(name='paho-mqtt-helpers',
       author='Christian Fobel',
       author_email='christian@fobel.net',
       url='https://github.com/Lucaszw/paho-mqtt-helpers',
-      install_requires=['paho-mqtt', 'wheezy', 'pandas-helpers',
+      install_requires=['paho-mqtt', 'wheezy.routing', 'pandas-helpers',
                         'mqtt-messages'],
       packages=['paho_mqtt_helpers'])
