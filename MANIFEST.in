@@ -1,5 +1,5 @@
 include COPYING
 include README.md
-include RELEASE-VERSION
-include version.py
 include setup.py
+include versioneer.py
+include paho_mqtt_helpers/_version.py

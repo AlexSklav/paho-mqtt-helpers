@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-
-import sys
 from setuptools import setup
-sys.path.insert(0, '.')
-import version
+
+import versioneer
+
 
 setup(name='paho-mqtt-helpers',
-      version=version.getVersion(),
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       description=open('README.md', 'rb').read(),
       author='Christian Fobel',
       author_email='christian@fobel.net',

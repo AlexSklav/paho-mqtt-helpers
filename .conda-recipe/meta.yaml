@@ -1,3 +1,8 @@
+{% if GIT_DESCRIBE_NUMBER > '0' %}
+{% set GIT_VERSION = GIT_DESCRIBE_TAG[1:] + '.post' + GIT_DESCRIBE_NUMBER %}
+{% else %}
+{% set GIT_VERSION = GIT_DESCRIBE_TAG[1:] %}
+{% endif %}
 # source will be downloaded prior to filling in jinja templates
 # Example assumes that this folder has setup.py in it
 source:
@@ -5,28 +10,32 @@ source:
 
 package:
   name: paho-mqtt-helpers
-{% if GIT_DESCRIBE_NUMBER > '0' %}
-  version: {{ GIT_DESCRIBE_TAG[1:] }}+{{ GIT_DESCRIBE_NUMBER }}
-{% else %}
-  version: {{ GIT_DESCRIBE_TAG[1:] }}
-{% endif %}
+  version: {{ GIT_VERSION }}
 
 build:
   # If this is a new build for the same version, increment the build
   # number. If you do not include this key, it defaults to 0.
   number: 0
   script: python setup.py install --single-version-externally-managed --record=record.txt
+  #: .. versionadded:: 0.3
+  noarch: python
 
 requirements:
   build:
-    - python 2.7*
+    - python
     - paho-mqtt
+    #: .. versionadded:: 0.3
+    - six
+    #: .. versionadded:: 0.3
+    - versioneer
   run:
-    - python 2.7*
+    - python
     - paho-mqtt
     - wheezy.routing
     - pandas-helpers
     - mqtt-messages-python
+    #: .. versionadded:: 0.3
+    - six
 
 test:
   imports:
