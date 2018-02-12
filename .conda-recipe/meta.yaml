@@ -17,16 +17,16 @@ build:
   # number. If you do not include this key, it defaults to 0.
   number: 0
   script: python setup.py install --single-version-externally-managed --record=record.txt
-  #: .. versionadded:: X.X.X
+  #: .. versionadded:: 0.3
   noarch: python
 
 requirements:
   build:
     - python
     - paho-mqtt
-    #: .. versionadded:: X.X.X
+    #: .. versionadded:: 0.3
     - six
-    #: .. versionadded:: X.X.X
+    #: .. versionadded:: 0.3
     - versioneer
   run:
     - python
@@ -34,7 +34,7 @@ requirements:
     - wheezy.routing
     - pandas-helpers
     - mqtt-messages-python
-    #: .. versionadded:: X.X.X
+    #: .. versionadded:: 0.3
     - six
 
 test:
