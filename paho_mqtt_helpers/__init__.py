@@ -12,8 +12,11 @@ import sys
 import paho.mqtt.client as mqtt
 from pandas_helpers import pandas_object_hook, PandasJsonEncoder
 from wheezy.routing import PathRouter
-
 from mqtt_messages import MqttMessages
+
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 
 logger = logging.getLogger(__name__)
 
