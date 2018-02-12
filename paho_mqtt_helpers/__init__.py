@@ -1,18 +1,20 @@
+from __future__ import print_function
+
 import datetime
 import inspect
 import json
 import logging
-import urllib
 import os
 import re
 import signal
 import socket
 import sys
 
-import paho.mqtt.client as mqtt
+from mqtt_messages import MqttMessages
 from pandas_helpers import pandas_object_hook, PandasJsonEncoder
 from wheezy.routing import PathRouter
-from mqtt_messages import MqttMessages
+import paho.mqtt.client as mqtt
+import six.moves
 
 from ._version import get_versions
 __version__ = get_versions()['version']
@@ -83,7 +85,7 @@ class BaseMqttReactor(MqttMessages):
     @property
     def url_safe_plugin_name(self):
         """Make plugin name safe for mqtt and http requests"""
-        return urllib.quote_plus(self.plugin_name)
+        return six.moves.urllib.parse.quote_plus(self.plugin_name)
 
     @property
     def client_id(self):

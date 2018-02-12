@@ -25,6 +25,8 @@ requirements:
     - python
     - paho-mqtt
     #: .. versionadded:: X.X.X
+    - six
+    #: .. versionadded:: X.X.X
     - versioneer
   run:
     - python
@@ -32,6 +34,8 @@ requirements:
     - wheezy.routing
     - pandas-helpers
     - mqtt-messages-python
+    #: .. versionadded:: X.X.X
+    - six
 
 test:
   imports:
