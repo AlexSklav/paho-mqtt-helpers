@@ -22,20 +22,28 @@ build:
 
 requirements:
   build:
-    - python
+    #: .. versionadded:: 0.3.1
+    - mqtt-messages-python
     - paho-mqtt
+    #: .. versionadded:: 0.3.1
+    - pandas-helpers
+    - python
     #: .. versionadded:: 0.3
     - six
     #: .. versionadded:: 0.3
     - versioneer
-  run:
-    - python
-    - paho-mqtt
+    #: .. versionadded:: 0.3.1
     - wheezy.routing
-    - pandas-helpers
+  run:
     - mqtt-messages-python
+    - paho-mqtt
+    - pandas-helpers
+    - python
     #: .. versionadded:: 0.3
     - six
+    #: .. versionadded:: 0.3
+    - versioneer
+    - wheezy.routing
 
 test:
   imports:
