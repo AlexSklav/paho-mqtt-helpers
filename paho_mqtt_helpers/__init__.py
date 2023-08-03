@@ -1,5 +1,4 @@
-from __future__ import print_function
-
+# coding: utf-8
 import datetime
 import inspect
 import json
@@ -10,13 +9,16 @@ import signal
 import socket
 import sys
 
+import paho.mqtt.client as mqtt
+
+from typing import Callable, Any
+from six import moves
 from mqtt_messages import MqttMessages
 from pandas_helpers import pandas_object_hook, PandasJsonEncoder
 from wheezy.routing import PathRouter
-import paho.mqtt.client as mqtt
-import six.moves
 
 from ._version import get_versions
+
 __version__ = get_versions()['version']
 del get_versions
 
@@ -27,8 +29,10 @@ class BaseMqttReactor(MqttMessages):
     """
     Base class for MQTT-based plugins.
     """
-    def __init__(self, host='localhost', port=1883, keepalive=60,
-                 base="microdrop"):
+
+    def __init__(self, host: str = 'localhost', port: int = 1883,
+                 keepalive: int = 60, base: str = "microdrop") -> None:
+        super().__init__()
         self._host = host
         self._port = port
         self._keepalive = keepalive
@@ -45,109 +49,107 @@ class BaseMqttReactor(MqttMessages):
     # Attributes
     # ==========
     @property
-    def host(self):
+    def host(self) -> str:
         return self._host
 
     @host.setter
-    def host(self, value):
+    def host(self, value: str) -> None:
         self._host = value
         self._connect()
 
     @property
-    def port(self):
+    def port(self) -> int:
         return self._port
 
     @port.setter
-    def port(self, value):
+    def port(self, value: int) -> None:
         self._port = value
         self._connect()
 
     @property
-    def keepalive(self):
+    def keepalive(self) -> int:
         return self._keepalive
 
     @keepalive.setter
-    def keepalive(self, value):
+    def keepalive(self, value: int) -> None:
         self._keepalive = value
         self._connect()
 
     @property
-    def plugin_path(self):
+    def plugin_path(self) -> str:
         """Get parent directory of class location"""
-        return os.path.dirname(os.path.realpath(
-            inspect.getfile(self.__class__)))
+        return os.path.dirname(os.path.realpath(inspect.getfile(self.__class__)))
 
     @property
-    def plugin_name(self):
+    def plugin_name(self) -> str:
         """Get plugin name via the basname of the plugin path """
         return os.path.basename(self.plugin_path)
 
     @property
-    def url_safe_plugin_name(self):
+    def url_safe_plugin_name(self) -> str:
         """Make plugin name safe for mqtt and http requests"""
-        return six.moves.urllib.parse.quote_plus(self.plugin_name)
+        return moves.urllib.parse.quote_plus(self.plugin_name)
 
     @property
-    def client_id(self):
+    def client_id(self) -> str:
         """ ID used for mqtt client """
-        return (self.url_safe_plugin_name + ">>"
-                + self.plugin_path + ">>"
-                + datetime.datetime.now().isoformat().replace(">>", ""))
+        return f"{self.url_safe_plugin_name}>>{self.plugin_path}>>" \
+               f"{datetime.datetime.now().isoformat().replace('>>', '')}"
 
-    def addGetRoute(self, route, handler):
+    def addGetRoute(self, route: str, handler: Callable) -> None:
         """Adds route along with corresponding subscription"""
         self.router.add_route(route, handler)
         # Replace characters between curly brackets with "+" wildcard
         self.subscriptions.append(re.sub(r"\{(.+?)\}", "+", route))
 
-    def sendMessage(self, topic, msg, retain=False, qos=0, dup=False):
+    def sendMessage(self, topic: str, msg: Any, retain: bool = False,
+                    qos: int = 0, dup: bool = False) -> None:
         message = json.dumps(msg, cls=PandasJsonEncoder)
         self.mqtt_client.publish(topic, message, retain=retain, qos=qos)
 
-    def subscribe(self):
+    def subscribe(self) -> None:
         for subscription in self.subscriptions:
             self.mqtt_client.subscribe(subscription)
 
     ###########################################################################
     # Private methods
     # ===============
-    def _connect(self):
+    def _connect(self, **kwargs) -> None:
+        host = kwargs.get('host', self.host)
+        port = kwargs.get('port', self.port)
+        keepalive = kwargs.get('keepalive', self.keepalive)
         try:
             # Connect to MQTT broker.
-            # TODO: Make connection parameters configurable.
-            self.mqtt_client.connect(host=self.host, port=self.port,
-                                     keepalive=self.keepalive)
+            self.mqtt_client.connect(host=host, port=port, keepalive=keepalive)
         except socket.error:
-            pass
-            # logger.error('Error connecting to MQTT broker.')
+            logger.error('Error connecting to MQTT broker.')
 
     ###########################################################################
     # MQTT client handlers
     # ====================
-    def on_connect(self, client, userdata, flags, rc):
-        self.addGetRoute("microdrop/"+self.url_safe_plugin_name+"/exit",
-                         self.exit)
-        self.listen()
+    def on_connect(self, client, userdata, flags, rc) -> None:
+        self.addGetRoute(f"microdrop/{self.url_safe_plugin_name}/exit", self.exit)
+        self.listen()  # Listen is not defined in the base class
         self.subscribe()
 
-    def on_disconnect(self, *args, **kwargs):
+    def on_disconnect(self, *args, **kwargs) -> None:
         # Startup Mqtt Loop after disconnected (unless should terminate)
         if self.should_exit:
             sys.exit()
         self._connect()
         self.mqtt_client.loop_forever()
 
-    def on_message(self, client, userdata, msg):
-        '''
+    def on_message(self, client, userdata, msg) -> None:
+        """
         Callback for when a ``PUBLISH`` message is received from the broker.
-        '''
+        """
         method, args = self.router.match(msg.topic)
 
         try:
             payload = json.loads(msg.payload, object_hook=pandas_object_hook)
         except ValueError:
             print("Message contains invalid json")
-            print("topic: " + msg.topic)
+            print(f"topic: {msg.topic}")
             payload = None
 
         if method:
@@ -156,20 +158,20 @@ class BaseMqttReactor(MqttMessages):
     ###########################################################################
     # Control API
     # ===========
-    def start(self):
+    def start(self) -> None:
         # Connect to MQTT broker.
         self._connect()
         # Start loop in background thread.
         signal.signal(signal.SIGINT, self.exit)
         self.mqtt_client.loop_forever()
 
-    def exit(self, a=None, b=None):
+    def exit(self, a=None, b=None) -> None:
         self.should_exit = True
         self.mqtt_client.disconnect()
 
-    def stop(self):
-        '''
+    def stop(self) -> None:
+        """
         Stop plugin thread.
-        '''
+        """
         # Stop client loop background thread (if running).
         self.mqtt_client.loop_stop()
