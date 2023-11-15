@@ -20,7 +20,6 @@ build:
 requirements:
   build:
     - python >=3.6
-    - six
     - versioneer
     - mqtt-messages-python
     - paho-mqtt
@@ -28,7 +27,6 @@ requirements:
     - wheezy.routing
   run:
     - python >=3.6
-    - six
     - versioneer
     - mqtt-messages-python
     - paho-mqtt
@@ -42,9 +40,9 @@ test:
 about:
   home: https://github.com/Lucaszw/paho-mqtt-helpers.git
   license: BSD
+  summary: Base functionality for MQTT reactor (i.e., a process to listen/react to MQTT topic messages).
 
 # source will be downloaded prior to filling in jinja templates
 # Example assumes that this folder has setup.py in it
 source:
   git_url: ../
-  

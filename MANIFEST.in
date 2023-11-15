@@ -3,3 +3,5 @@ include README.md
 include setup.py
 include versioneer.py
 include paho_mqtt_helpers/_version.py
+exclude .DS_Store
+recursive-exclude paho_mqtt_helpers .DS_Store

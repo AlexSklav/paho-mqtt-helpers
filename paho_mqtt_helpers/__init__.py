@@ -12,7 +12,6 @@ import sys
 import paho.mqtt.client as mqtt
 
 from typing import Callable, Any
-from six import moves
 from mqtt_messages import MqttMessages
 from pandas_helpers import pandas_object_hook, PandasJsonEncoder
 from wheezy.routing import PathRouter
